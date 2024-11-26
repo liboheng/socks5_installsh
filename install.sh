@@ -15,6 +15,7 @@ PORT=1080
 USER="defaultuser"
 PASS="defaultpassword"
 
+echo "Received arguments: $@"
 # Parse command-line arguments
 while [ "$1" != "" ]; do
     case $1 in
