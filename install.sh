@@ -15,6 +15,29 @@ PORT=6688
 USER="defaultuser"
 PASS="defaultpassword"
 
+# Handle uninstall
+if [ "$1" == "uninstall" ]; then
+    echo "Uninstalling Dante SOCKS5 server..."
+    # Stop and disable the service
+    systemctl stop danted
+    systemctl disable danted
+
+    # Remove configuration and binaries
+    apt remove --purge dante-server -y
+    rm -rf /etc/danted.conf /usr/sbin/sockd
+
+    # Remove firewall rules
+    if command -v ufw >/dev/null; then
+        ufw delete allow "$PORT"
+    elif command -v iptables >/dev/null; then
+        iptables -D INPUT -p tcp --dport "$PORT" -j ACCEPT
+        iptables-save > /etc/iptables.rules
+    fi
+
+    echo "Uninstall complete. Dante SOCKS5 server has been removed."
+    exit 0
+fi
+
 # Parse command-line arguments
 while [ "$1" != "" ]; do
     case $1 in
@@ -30,6 +53,7 @@ while [ "$1" != "" ]; do
         * )
             echo "Invalid option: $1"
             echo "Usage: sudo bash $0 --port=<port> --user=<user> --passwd=<password>"
+            echo "       sudo bash $0 uninstall"
             exit 1
     esac
     shift
