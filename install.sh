@@ -11,25 +11,21 @@ if [ $(id -u) != "0" ]; then
 fi
 
 # Default values
-PORT=1080
+PORT=6688
 USER="defaultuser"
 PASS="defaultpassword"
 
-echo "Received arguments: $@"
 # Parse command-line arguments
 while [ "$1" != "" ]; do
     case $1 in
-        --port )
-            shift
-            PORT=$1
+        --port=* )
+            PORT="${1#*=}"
             ;;
-        --user )
-            shift
-            USER=$1
+        --user=* )
+            USER="${1#*=}"
             ;;
-        --passwd )
-            shift
-            PASS=$1
+        --passwd=* )
+            PASS="${1#*=}"
             ;;
         * )
             echo "Invalid option: $1"
@@ -38,6 +34,10 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
+echo "Port: $PORT"
+echo "User: $USER"
+echo "Password: $PASS"
 
 # Install Dante
 REQUEST_SERVER="https://raw.github.com/Lozy/danted/master"
