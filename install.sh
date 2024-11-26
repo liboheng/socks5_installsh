@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #   Dante Socks5 Server AutoInstall
-#   Supports Dynamic Command-Line Parameters
+#   Supports Dynamic Command-Line Parameters and Uninstall Logic
 #
 
 # Check if user is root
@@ -16,7 +16,7 @@ USER="defaultuser"
 PASS="defaultpassword"
 
 # Handle uninstall
-if [ "$1" == "uninstall" ]; then
+if [ "$1" == "uninstall" ] || [ "$1" == "--uninstall" ]; then
     echo "Uninstalling Dante SOCKS5 server..."
     # Stop and disable the service
     systemctl stop danted
@@ -54,6 +54,7 @@ while [ "$1" != "" ]; do
             echo "Invalid option: $1"
             echo "Usage: sudo bash $0 --port=<port> --user=<user> --passwd=<password>"
             echo "       sudo bash $0 uninstall"
+            echo "       sudo bash $0 --uninstall"
             exit 1
     esac
     shift
@@ -62,6 +63,43 @@ done
 echo "Port: $PORT"
 echo "User: $USER"
 echo "Password: $PASS"
+
+# Check if Dante is already installed
+if command -v sockd >/dev/null; then
+    echo "[Warning] Dante SOCKS5 server already installed."
+
+    # Check if configuration file exists
+    if [ ! -f /etc/danted.conf ]; then
+        echo "Error: Configuration file /etc/danted.conf not found."
+        echo "Restoring default configuration..."
+        cat > /etc/danted.conf <<EOF
+logoutput: syslog
+
+internal: 0.0.0.0 port = $PORT
+external: 0.0.0.0
+
+method: username
+
+user.privileged: root
+user.notprivileged: nobody
+
+client pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    log: connect disconnect
+}
+
+socks pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    log: connect disconnect
+}
+EOF
+        echo "Default configuration restored. Restarting Dante..."
+        systemctl restart danted
+    fi
+
+    echo "Dante SOCKS5 server is ready."
+    exit 0
+fi
 
 # Install Dante
 REQUEST_SERVER="https://raw.github.com/Lozy/danted/master"
