@@ -11,7 +11,7 @@ if [ $(id -u) != "0" ]; then
 fi
 
 # Default values
-PORT=6688
+PORT=2016
 USER="defaultuser"
 PASS="defaultpassword"
 
@@ -59,6 +59,12 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
+# Check for blank user or password
+if [ -z "$USER" ] || [ -z "$PASS" ]; then
+    echo "Error: User or password can't be blank."
+    exit 1
+fi
 
 echo "Port: $PORT"
 echo "User: $USER"
